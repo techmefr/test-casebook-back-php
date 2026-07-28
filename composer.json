@@ -1,0 +1,17 @@
+{
+    "name": "techmefr/test-casebook-back",
+    "description": "Testing methodology and AI-agent playbook for Laravel backends — exhaustive, persona-matrix-driven test suites",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "techmefr"
+        }
+    ],
+    "require": {
+        "php": "^8.2"
+    },
+    "extra": {
+        "note": "No service provider or artisan command yet — this is a doctrine + scaffolder script repo, not an installable runtime package. Run bin/casebook-back-init.php from a checkout to scaffold a target project."
+    }
+}
