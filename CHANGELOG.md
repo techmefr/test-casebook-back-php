@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.0
+
+- **Second non-Laravel worked example: Slim 4.** Same blog-idea scenario, built on a micro-framework with no bundled ORM/auth/validation — everything hand-rolled (JWT auth via `firebase/php-jwt`, plain-class validators, an in-memory `Db`). **47/47 tests green (9 unit + 38 functional), PHPStan level 7 clean, 96.75% line coverage.** See [`docs/testing-guide/slim.md`](docs/testing-guide/slim.md).
+- **Real finding: `AppFactory::create()` ships with no routing/error middleware** — 404/405 propagate as uncaught `Slim\Exception\Http*Exception`s instead of HTTP responses until `$app->addRoutingMiddleware()`/`$app->addErrorMiddleware(...)` are added explicitly. Only surfaced by running the actual not-found/method-not-allowed paths, not the persona-matrix happy path.
+- **Real finding: `$app->handle($request)` is a zero-extra-dependency native test mechanism** — Slim's own production entrypoint and its in-process test entrypoint are the same PSR-15 `handle()` method, no separate test-HTTP-client package needed at all.
+- **Real finding: PHP has no fake-timer mechanism of any kind**, unlike JS's global `jest.useFakeTimers()` (with its documented hazard list) or Symfony's DI-based `ClockInterface`. The scheduling suite falls back to relative real dates (`new \DateTimeImmutable('+1 day')`) — a genuine three-way split worth naming across the doctrine.
+- **Real finding: two PHPDoc tags crammed on one line silently fail to parse** — `/** @param ... @return ... */` on a single line silently dropped the `@return` tag, with PHPStan reporting a missing-type error rather than a syntax error. Fixed by splitting into a standard multi-line docblock.
+- **Real finding: `Slim\App`'s container-type generic is declared invariant** — annotating `@return Slim\App<ContainerInterface|null>` produces a self-inflicted "should return X but returns X" error on textually identical types. Fixed with a scoped `ignoreErrors` entry rather than fighting an unwinnable annotation.
+- **`AGENTS.md`/`README.md` updated with a Slim row** in the core-vs-optional detection tables.
+
 ## 0.9.0
 
 - **First non-Laravel worked example: Symfony 8.1.** Same blog-idea scenario (roles, private article, scheduled publishing, comments + notification), built with Symfony's own idioms: a `Voter` for authorization, a custom `AbstractAuthenticator` for API-token auth, Serializer+Validator for request validation, `dama/doctrine-test-bundle` for per-test isolation. **45/45 tests green (9 unit + 36 functional), PHPStan level 7 clean, 93.12% line coverage.** See [`docs/testing-guide/symfony.md`](docs/testing-guide/symfony.md).
