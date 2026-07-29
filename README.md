@@ -20,6 +20,24 @@ It's not theory — it's been run for real, end to end, on five PHP frameworks:
 
 Full receipts, including the bugs and the fixes, in [`docs/testing-guide/`](docs/testing-guide/).
 
+<details>
+<summary>What a run actually looks like (Slim 4 worked example)</summary>
+
+```
+$ vendor/bin/phpunit
+...
+OK (47 tests, 118 assertions)
+
+$ vendor/bin/phpstan analyse --level=7
+ [OK] No errors
+
+$ vendor/bin/phpunit --coverage-text
+Lines: 96.75% (298/308)
+```
+
+Full walkthrough, including the "no routing/error middleware by default" finding this run surfaced, in [`docs/testing-guide/slim.md`](docs/testing-guide/slim.md).
+</details>
+
 ## Quickstart
 
 ```bash
@@ -80,7 +98,14 @@ No installable Composer package yet (no service provider, no `artisan casebook:i
 
 ## Contributing
 
-Same spirit as the frontend repo: contributions are welcome, no permission needed. If a rule here doesn't match your project's reality, or you've built something similar for a different backend stack, open an issue or a PR — verify against the real tool before proposing a fix, don't guess.
+Contributions are welcome, no permission needed — see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Same doctrine, other stacks
+
+Same method — plan first, exhaustive not happy-path, persona matrix dense on refused cases, independent review gate, enforced coverage floor — ported to each ecosystem's own tooling:
+
+- [`test-casebook`](https://github.com/techmefr/test-casebook) — frontend/DOM (Nuxt, React, Vue, Svelte, Astro, Laravel/Livewire)
+- [`test-casebook-back-js`](https://github.com/techmefr/test-casebook-back-js) — Node/TypeScript backends
 
 ## License
 
