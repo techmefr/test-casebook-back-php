@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.0
+
+- **Third non-Laravel worked example: Mezzio (Laminas).** Same blog-idea scenario, built directly against Mezzio's `Laminas\Stratigility\MiddlewarePipe` primitives — no `mezzio-skeleton`, no service container. **48/48 tests green (9 unit + 39 functional), PHPStan level 7 clean, 97.66% line coverage.** See [`docs/testing-guide/mezzio.md`](docs/testing-guide/mezzio.md).
+- **Real finding: Mezzio's `DispatchMiddleware` collapses 404 and 405 into one undifferentiated failure** — `RouteResult::process()` delegates both to the same fallback handler with no exception and no automatic status-code distinction; only `RouteResult::isMethodFailure()`, read explicitly from the request attribute, tells them apart. Unlike Slim's loud missing-middleware failure (an uncaught exception impossible to miss), this fails quietly wrong (always 404) if not handled.
+- **Real finding: the Slim worked example's entire domain layer (`User`/`Article`/`Comment`/`ArticlePolicy`/`CommentPolicy`/`Validators`) ported to Mezzio with zero code changes** — empirical confirmation that correctly-isolated PHP business/authorization logic is genuinely framework-agnostic, not just claimed to be by the doctrine's existing unit-testing principle.
+- **Real finding: `Db::deleteArticle()`'s cascade-delete-comments branch sat uncovered** until a dedicated case (delete an article that already has a comment, assert the comment 404s afterward) was added — the coverage floor forcing a real gap back to the plan, per Step 6, caught for real rather than asserted.
+- **Real finding: PHPStan flags an unused closure `use` and a PSR-7 header-array key-type mismatch** (`array<string, string>` vs `array<non-empty-string, array<string>|string>`) — both fixed at the type level rather than suppressed.
+- **`AGENTS.md`/`README.md` updated with a Mezzio row** in the core-vs-optional detection tables.
+
 ## 0.10.0
 
 - **Second non-Laravel worked example: Slim 4.** Same blog-idea scenario, built on a micro-framework with no bundled ORM/auth/validation — everything hand-rolled (JWT auth via `firebase/php-jwt`, plain-class validators, an in-memory `Db`). **47/47 tests green (9 unit + 38 functional), PHPStan level 7 clean, 96.75% line coverage.** See [`docs/testing-guide/slim.md`](docs/testing-guide/slim.md).
