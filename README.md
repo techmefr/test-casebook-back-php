@@ -2,6 +2,10 @@
 
 > A testing methodology and AI-agent playbook for PHP backends — exhaustive, strictly-typed, persona-matrix-driven test suites.
 
+Most "AI, write my tests" runs stop at the happy path: a few green checks, a coverage number that looks fine on paper, and a permission matrix nobody actually built. `test-casebook-back` is a playbook that forces the opposite — plan every case from the source before writing anything, weight the persona matrix on the *refused* cases (not just the allowed ones), gate every block behind an independent review, and hold a real coverage floor. It's been proven on five PHP frameworks (Laravel, Symfony, Slim, Mezzio, CodeIgniter 4) via worked examples — see `docs/testing-guide/` for the receipts.
+
+**What's next:** this doctrine is about to be run for real against actual open-source PHP projects, not synthetic demos, with results (and hopefully PRs) published as they land. If you maintain a PHP project and wouldn't mind being a test subject, or if you want to run this doctrine yourself and compare notes, open an issue or reach out — requests for "please test project X" are very welcome.
+
 `test-casebook-back` is the **backend counterpart** of [`test-casebook`](https://github.com/techmefr/test-casebook) (the frontend/JS doctrine). Same method — plan first, exhaustive not happy-path, isolated and deterministic, permission matrix dense on refused cells, independent review gate, enforced coverage floor — ported to PHP. It lives in its **own repo** because the two ecosystems share no distribution mechanism (Composer vs `npx`), no runner (PHPUnit/Pest vs Vitest/Playwright), and no static-analysis tool (PHPStan/Larastan vs `tsc`/ESLint) — see `docs/strategy.md` for the full reasoning.
 
 ## Core vs optional — this is not a Laravel-only or Lomkit-only doctrine
@@ -71,6 +75,11 @@ A seventh and final stage built the same scenario on **CodeIgniter 4**, this tim
 ## Contributing
 
 Same spirit as the frontend repo: contributions are welcome, no permission needed. If a rule here doesn't match your project's reality, or you've built something similar for a different backend stack (Symfony, plain PHP, a different REST toolkit), open an issue or a PR — verify against the real tool before proposing a fix, don't guess.
+
+Three ways to get involved right now, before the real-project runs even start:
+- **Suggest a project to test** — open an issue with a link and why it'd be a good candidate (real business logic, actively maintained, ideally open to external PRs).
+- **Run the doctrine yourself** — scaffold it into your own PHP project, try it, and report back what worked, what didn't, and what it found that you wouldn't have caught otherwise.
+- **Volunteer your project** — if you maintain a PHP backend and don't mind an experimental test suite showing up as a PR, say so.
 
 ## License
 
