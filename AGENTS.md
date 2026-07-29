@@ -78,6 +78,7 @@ vendor/bin/phpstan analyse --memory-limit=1G
 - **`declare(strict_types=1);`** at the top of every file you write or touch — the direct counterpart of the JS guides' "no `any`" rule.
 - **Type factories and fixtures from the real Model/Resource/DTO**, never a bare untyped array — same anti-mock-drift principle as the front doctrine: a factory that has drifted from the real schema should fail at analysis time, not silently green a test against a shape that no longer exists.
 - If the project has **no** static-analysis tool configured, skip this step entirely — don't push PHPStan onto a project that hasn't opted in (same rule as the front doctrine's cleaner: optional, never installed without asking).
+- **Point `paths` at `tests/` too, not just `app/`.** If `phpstan.neon` only scans `app`, the test suite itself never gets checked — and running it for real against a test suite surfaces genuine errors the `app`-only scope misses: `collect($response->json(...))` unable to resolve its template type (fix: cast to `(array)` first), and — if Pest is present — Larastan not recognizing a Pest closure's bound `$this` as the project's `TestCase` (fix: an explicit `/** @var \Tests\TestCase $this */` docblock at the top of the closure). Both are real, not theoretical — verified against a running Lomkit + Pest demo project.
 
 ---
 
@@ -107,6 +108,20 @@ Identical process to the front doctrine, PHP-flavored:
 2. **Read the unit's full source end to end** before enumerating cases — every branch, every guard, every collaborator it calls.
 3. **Enumerate every case as a checkbox**: every input partition, every conditional branch, every state (success/empty/error), every validation rule (valid **and** invalid input), every guard the code already contains, and — critically — **every authorization gate** (see Step 5.2: this needs a full persona matrix, not one happy-path user).
 4. Note the layer (unit/feature) and, if the unit is Lomkit-exposed, the endpoint(s) involved.
+
+### Step 5.0bis — The category checklist (don't stop at permissions)
+
+The persona matrix (Step 5.2) is the highest-value category because it's where refused-access bugs hide, but a unit's `task-test.md` block is not exhaustive until every category below has been considered for it — tick "N/A" explicitly rather than silently skipping one:
+
+- **Authorization** — the persona matrix (Step 5.2).
+- **Validation** — every rule in the FormRequest/`$request->validate()` call, both the valid case and *each* invalid case (missing, wrong type, out of range, duplicate-when-unique) — one case per rule, not one "invalid payload" catch-all.
+- **Business/state logic** — every branch and every state transition the unit's own code contains (not the framework's), including the empty/error/edge states, not just the success path.
+- **Isolation** — no test may depend on wall-clock time (`Carbon::setTestNow()`), a real external HTTP call (`Http::fake()` with typed fixtures), or a real queue/mail/notification dispatch (`Bus::fake()`/`Mail::fake()`/`Notification::fake()`) — assert the fake was dispatched with the right arguments, don't let it actually fire.
+- **Data integrity** — unique constraints, cascade/restrict deletes, foreign-key-required relations — assert via the database, not just the model in memory (`assertModelExists`/`assertDatabaseHas`).
+- **Multi-role aggregation** — already required by Step 5.2's last bullet; re-checked here so it isn't missed for a unit that looks single-role at first read.
+- **Optional-module cases** — Lomkit structural whitelist (422) and Policy gate (403) as two separate cases (see the Lomkit guide) if the unit is Lomkit-exposed; row-scoping if `laravel-access-control` is present.
+
+A block that only has "authorization: ✅" ticked and nothing else considered is not done — it's one category out of several, and the coverage floor (Step 6) will not catch a category that was never written as a case in the first place.
 
 ### Step 5.1 — Execute each block
 

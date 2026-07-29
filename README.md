@@ -25,7 +25,9 @@ The **core** (`AGENTS.md` Steps 1–6) applies to **any Laravel project** — pl
 - **`.claude/hooks/test-casebook-back-gate.mjs`** — a Claude Code `PreToolUse` hook that blocks writing to a `*Test.php` file under `tests/` until a `task-test.md` plan exists above it. (The hook itself runs on Node — that's how Claude Code hooks work regardless of the target project's language, same as the JS-side `test-casebook` repo's hook.)
 - **`docs/strategy.md`** — why this doctrine, and why it's a separate repo from the frontend one.
 - **`docs/conventions.md`** — test naming, the `task-test.md` shape, persona naming.
-- **`docs/testing-guide/lomkit.md`** — optional module: the two structurally different enforcement layers Lomkit uses (422 structural whitelist vs 403 Policy gate), verified against the package's actual source, not guessed.
+- **`docs/testing-guide/lomkit.md`** — optional module: the two structurally different enforcement layers Lomkit uses (422 structural whitelist vs 403 Policy gate). Verified twice over — first by reading the package source, then for real: `lomkit/laravel-rest-api` + `lomkit/laravel-access-control` installed on the blog project, 63/63 tests green, Larastan level 7 clean, and two real bugs found in the process (see the guide's "Verified for real" section).
+- **`docs/testing-guide/worked-example.md`** — a real Article API (roles + a private article), run for real: 32/32 PHPUnit tests green (unit + feature, incl. validation & multi-role), Larastan level 7 clean, no Lomkit involved (core doctrine only).
+- **`docs/testing-guide/blog-worked-example.md`** — the full blog idea (visiteur/membre/auteur/admin), scheduled publishing + comments + notification, run for real: 47/47 tests green, Larastan level 7 clean. First real exercise of the isolation rules (`travelTo`, `Notification::fake()`, `recycle()`).
 - **`bin/casebook-back-init.php`** — scaffolder: copies `AGENTS.md`, `docs/` and `.claude/` into a target project.
 
 ## How it's consumed
@@ -38,7 +40,15 @@ No installable Composer package yet (no service provider, no `artisan casebook:i
 
 ## Status
 
-Early — built from real conventions found in Xefi's own Laravel/Lomkit backends (`skera-api`, `nexeren-api`, `platform-api`): PHPUnit as the actual runner (not Pest), Larastan at level 7 with a `phpstan-baseline.neon` and the `xefi/phpstan-xefi-rules` package, `spatie/laravel-permission` for roles, `#[Test]` attribute + snake_case method naming. The Lomkit two-layer distinction (422 structural vs 403 Policy) was verified by reading `vendor/lomkit/laravel-rest-api/src` directly, not assumed. Not yet run end-to-end against a real project's test suite the way the frontend doctrine was (see its `docs/testing-guide/laravel.md` worked example) — that's the natural next validation step.
+Built from real conventions found in Xefi's own Laravel/Lomkit backends (`skera-api`, `nexeren-api`, `platform-api`): PHPUnit as the actual runner (not Pest), Larastan at level 7 with a `phpstan-baseline.neon` and the `xefi/phpstan-xefi-rules` package, `spatie/laravel-permission` for roles, `#[Test]` attribute + snake_case method naming. Also run end-to-end for real, in three stages on the same growing blog project, executed in Docker throughout:
+
+1. A fresh `laravel/laravel` project with roles and a private article — 32/32 PHPUnit tests green (unit + feature, incl. validation & multi-role), Larastan level 7 clean after fixing the real errors it found. See [`docs/testing-guide/worked-example.md`](docs/testing-guide/worked-example.md).
+2. Expanded into the full blog idea (visiteur/membre/auteur/admin, scheduled publishing, comments, notification) to exercise the isolation rules for real — 47/47 green. See [`docs/testing-guide/blog-worked-example.md`](docs/testing-guide/blog-worked-example.md).
+3. Converted to `lomkit/laravel-rest-api` + `lomkit/laravel-access-control` — 63/63 green, Larastan level 7 clean, and two real bugs found along the way (a dangling-transaction bug in Lomkit's own `mutate()` on a 403, and a container-state leak when two Lomkit requests hit the same endpoint inside one test method). See [`docs/testing-guide/lomkit.md`](docs/testing-guide/lomkit.md)'s "Verified for real" section.
+
+Every category in `AGENTS.md`'s Step 5.0bis checklist — Authorization, Validation, Multi-role aggregation, Isolation, and the Lomkit optional module — has now been run for real, not just documented from reading source.
+
+Four more claims in this doctrine have since been checked for real against that same demo, not just assumed: the 80% coverage floor is genuinely met (90.6% lines via `pcov`); the Pest path actually runs 64/64 green alongside plain PHPUnit, not just PHPUnit; pointing Larastan at `tests/` as well as `app/` surfaces real, fixable errors (`collect()`'s unresolved template type, Pest's unbound `$this`); and the `test-casebook-back-gate.mjs` hook still correctly blocks/allows test-file writes against the final, fully-accumulated project. See [`docs/testing-guide/worked-example.md`](docs/testing-guide/worked-example.md)'s closing section for the details.
 
 ## Contributing
 

@@ -6,7 +6,7 @@ model: sonnet
 
 # test-writer-back
 
-You write the tests for **one block** — a single unit under test (a Policy, a Resource, a Model's business logic, an Action/Job/Listener) — and nothing else. The methodology is `AGENTS.md` (at the project root); read the parts that apply (Step 4 conventions, Step 5.0/5.1, Step 5.2 if the unit is permission-gated, and `docs/testing-guide/lomkit.md` if the unit is Lomkit-exposed). Do not re-plan the whole project; you own this block.
+You write the tests for **one block** — a single unit under test (a Policy, a Resource, a Model's business logic, an Action/Job/Listener) — and nothing else. The methodology is `AGENTS.md` (at the project root); read the parts that apply (Step 4 conventions, Step 5.0/5.0bis/5.1, Step 5.2 if the unit is permission-gated, and `docs/testing-guide/lomkit.md` if the unit is Lomkit-exposed). Do not re-plan the whole project; you own this block.
 
 ## Inputs you are given
 
@@ -17,7 +17,8 @@ You write the tests for **one block** — a single unit under test (a Policy, a 
 ## What you do
 
 1. **Read the unit's full source** before writing — every branch, guard, and collaborator it calls.
-2. **One assertion-bearing test per checkbox.** No case left without a test; if a path is genuinely unreachable, note why in `task-test.md` next to the checkbox — **never as a comment in the test file**.
+2. **Before writing a single test, walk Step 5.0bis's category checklist against this unit** — authorization, validation, business/state logic, isolation, data integrity, multi-role aggregation, optional-module cases — and confirm `task-test.md` has a checkbox (or an explicit N/A) for each category that applies. If a category was silently skipped in the plan, add it now rather than writing tests only for the categories already listed.
+3. **One assertion-bearing test per checkbox.** No case left without a test; if a path is genuinely unreachable, note why in `task-test.md` next to the checkbox — **never as a comment in the test file**.
    - **No comments in the code you write.** No `// arrange / act / assert`, no section banners. The test/method name carries the intent — if a test needs a comment to be understood, rename it or split it.
 3. **Match the project's runner** (Pest or plain PHPUnit, per Step 1's detection) and its existing naming convention (`#[Test]` + snake_case, or Pest's `it(...)`).
 4. **`declare(strict_types=1);`**, typed factories/fixtures against the real Model/Resource/DTO — no bare untyped arrays standing in for a domain object.

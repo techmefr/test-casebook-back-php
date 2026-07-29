@@ -109,6 +109,34 @@ Don't write a case asserting that Lomkit's own search filters, sorts, or paginat
 - **your** custom Actions/Instructions,
 - **your** `searchQuery`/`mutateQuery`/`destroyQuery` overrides if the project customizes them (e.g. a multi-tenant scoping applied via `lomkit/laravel-access-control` or a bespoke `->controlled()` scope) — this is exactly the kind of query-level enforcement that's easy to get right in one Resource and forget in the next, so a case for it belongs in every gated Resource's block, not just once.
 
+## Verified for real: `lomkit/laravel-rest-api` + `lomkit/laravel-access-control` installed and run
+
+Everything above this section was originally written from reading the package source. It has now also been run for real — the Article/blog demo (see `blog-worked-example.md`) was given a real `ArticleResource` on top of `lomkit/laravel-rest-api ^2.22` and `lomkit/laravel-access-control ^0.5`, with real HTTP requests through `php artisan test`. **63/63 tests green, Larastan level 7 clean.** Three things the source-reading alone didn't catch, only running it did:
+
+1. **`destroy` is bulk-by-body, not a URL segment.** There is no `DELETE /articles/{id}` route — the registered route is `DELETE /articles` and the target rows are named in the JSON body: `{"resources": [1, 2, 3]}`. `authorizeTo('delete', $model)` runs in a loop over the resolved models, so a persona-matrix 403 test still works, it's just shaped differently than a conventional REST `DELETE /resource/{id}`:
+   ```php
+   $this->actingAs($outsider)
+       ->deleteJson('/api/rest/articles', ['resources' => [$article->id]])
+       ->assertForbidden();
+   ```
+   An unknown id in `resources` fails **validation** (422, via `Rule::exists`), not the Policy gate (403) — another instance of the two-layer distinction, this time on the destroy path rather than search.
+
+2. **`details` is not "get one record."** It returns `{'data': $resource->jsonSerialize()}` — the Resource's own *schema* (fields/relations/limits), not a model instance. Fetching a single record by id is done through `search` with an `id` filter, or through `mutate`'s `update` operation with a `key`. Assuming `details` was a Nova-style "show" endpoint would have produced tests asserting the wrong shape entirely.
+
+3. **A real upstream bug: `mutate()` leaves a dangling transaction on a 403.** `Lomkit\Rest\Concerns\PerformsRestOperations::mutate()` calls `DB::beginTransaction()` manually and only reaches `DB::commit()` on the success path — there is no `try/catch`/`rollback`. When `authorizeTo('create', ...)` throws `AuthorizationException` mid-mutate (the exact case a persona-matrix "denied" test wants to assert), the transaction is never closed. In a test suite that reuses one SQLite connection across tests (as `LazilyRefreshDatabase` does), the very next test that touches the database fails with `SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction` — a failure that looks like it belongs to a completely unrelated test. The workaround, until this is fixed upstream: explicitly close the transaction after asserting the 403 —
+   ```php
+   $this->actingAs($member)
+       ->postJson('/api/rest/articles/mutate', $payload)
+       ->assertForbidden();
+
+   DB::rollBack();
+   ```
+   This is a real, reproducible package limitation (confirmed by isolating the two requests into separate test methods and watching the second one only fail when it follows a mutate-403 test) — not a testing-doctrine convention, and not something to silently work around without a comment pointing future readers at this section.
+
+4. **Running two Lomkit requests to the *same* endpoint inside one test method can silently skip validation on the second call.** A structural-whitelist (422) test written as `actingAs($admin)->postJson(...); actingAs($member)->postJson(...)` in one method had its second call bypass field validation entirely and hit the database with the raw invalid field — while each call passed correctly in its own isolated test method. This reinforces the doctrine's existing "one assertion-bearing test per case" rule (`AGENTS.md` Step 5.1): with Lomkit specifically, that rule isn't just about naming/readability, it avoids resource/container state leaking between requests replayed in the same PHPUnit process.
+
+5. **Row-level scoping for `laravel-access-control`-style needs is your own `searchQuery()` override, not automatic.** `search()`'s only built-in authorization call is a single `authorizeTo('viewAny', Model::class)` — it does **not** filter rows by the `view` Policy method on its own. Without an explicit `searchQuery()` override, an authenticated member could search and see every private/scheduled article regardless of the `ArticlePolicy::view()` rule, because the policy is never consulted per-row during search. This is exactly the "third enforcement layer" the section below describes — it must be written, it doesn't come for free just because a Policy exists.
+
 ## If `lomkit/laravel-access-control` is also present
 
 That package typically layers row-level scoping on top of Lomkit's own model-level Policy checks (e.g. restricting a `search` to rows the persona's tenant/agency/scope can see, independent of whether they pass the `view` ability on the model class in general). Treat it as a **third enforcement layer**, distinct from both the structural whitelist (422) and the Policy gate (403): a persona might pass `view` on the `Agency` model in general but still have a given row's data filtered out of their `search` results by the access-control scope. Assert the row is **absent from the result set**, not merely that a direct-record request 403s — the two failure modes are different bugs.
