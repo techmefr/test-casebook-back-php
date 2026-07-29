@@ -1,24 +1,27 @@
 # AGENTS.md — test-casebook-back testing playbook
 
-> **For an AI coding agent (Claude Code, etc.).** You have been handed this file (or the test-casebook-back repository) and asked to set up the **test-casebook-back** methodology and write the test suite for a Laravel backend. This file lives in the test-casebook-back repo; **apply its steps to the project you are currently working in** (the "target project"), not to test-casebook-back itself.
+> **For an AI coding agent (Claude Code, etc.).** You have been handed this file (or the test-casebook-back repository) and asked to set up the **test-casebook-back** methodology and write the test suite for a PHP backend. This file lives in the test-casebook-back repo; **apply its steps to the project you are currently working in** (the "target project"), not to test-casebook-back itself.
 
-`test-casebook-back` is the **backend counterpart** of [`test-casebook`](https://github.com/techmefr/test-casebook) — same doctrine (plan first, exhaustive not happy-path, isolated and deterministic, permission matrix, review gate, coverage floor), ported to PHP/Laravel instead of JS. It is a **separate repo on purpose**: the two ecosystems don't share a distribution mechanism (`npx` vs Composer), a runner (Vitest/Playwright vs PHPUnit/Pest), or a static-analysis tool (`tsc`/ESLint vs PHPStan) — forcing them into one doc produces a doc that fits neither.
+`test-casebook-back` is the **backend counterpart** of [`test-casebook`](https://github.com/techmefr/test-casebook) — same doctrine (plan first, exhaustive not happy-path, isolated and deterministic, permission matrix, review gate, coverage floor), ported to PHP instead of JS. It is a **separate repo on purpose**: the two ecosystems don't share a distribution mechanism (`npx` vs Composer), a runner (Vitest/Playwright vs PHPUnit/Pest), or a static-analysis tool (`tsc`/ESLint vs PHPStan) — forcing them into one doc produces a doc that fits neither.
 
 ## Core vs optional — don't assume packages nobody asked for
 
-This playbook has a **generic core** that applies to any Laravel project, and **optional modules** that only apply if the target project actually uses the package in question. Detect before applying — never install or assume a package the project doesn't already depend on:
+This playbook has a **generic core** that applies to any PHP backend, and **framework/package-specific modules** that only apply if the target project actually uses them. Detect before applying — never install or assume a package the project doesn't already depend on:
 
 | Module | Detect via (`composer.json`) | If absent |
 |---|---|---|
-| **Core** (this file, Steps 1–6) | `laravel/framework` | N/A — always applies |
-| Pest (vs plain PHPUnit) | `pestphp/pest` | Assume plain PHPUnit test classes (the default in this playbook) |
+| **Core** (this file, Steps 1–6) | any of `laravel/framework`, `symfony/framework-bundle` | N/A — always applies, adapt the framework-specific mechanics below |
+| Laravel | `laravel/framework` | Use the target framework's own routing/DI/testing conventions instead — the persona-matrix principle (Step 5.2) still applies |
+| Pest (vs plain PHPUnit, Laravel only) | `pestphp/pest` | Assume plain PHPUnit test classes (the default in this playbook) |
 | Larastan (PHPStan for Laravel) | `larastan/larastan` | Skip the static-analysis step, or use plain `phpstan/phpstan` if present without Larastan |
 | `spatie/laravel-permission` | `spatie/laravel-permission` | Build the persona catalog from whatever the project actually uses to gate access (a `role` column, custom Gate definitions, a bespoke ACL) — see Step 5.2 |
 | `lomkit/laravel-rest-api` | `lomkit/laravel-rest-api` | Skip `docs/testing-guide/lomkit.md` entirely — nothing in the core steps depends on it |
 | `lomkit/laravel-access-control` | `lomkit/laravel-access-control` | Skip the row-scoping notes in the Lomkit guide |
+| Symfony | `symfony/framework-bundle` | Authorization goes through a Voter (`Voter::voteOnAttribute()` — check the installed version's exact signature, it has gained parameters across major versions), not a Laravel Policy. Auth is a custom `AbstractAuthenticator`, not Sanctum/Passport. Validation is the Serializer (`allow_extra_attributes: false`) + Validator components on plain DTOs, not FormRequests. Time-mocking is DI-based (`ClockInterface`/`MockClock` swapped into the container), not a global fake-clock call — see `docs/testing-guide/symfony.md` |
+| `dama/doctrine-test-bundle` (Symfony) | `dama/doctrine-test-bundle` | Per-test transaction rollback is automatic; without it, reset the schema/data explicitly between tests |
 | Any project-specific PHPStan ruleset (e.g. an internal `*/phpstan-*-rules` package) | present in `require-dev` | Just run whatever `phpstan.neon` already configures — don't invent rules |
 
-**Not every Laravel project runs Lomkit, laravel-access-control, or an org-specific PHPStan ruleset.** Those are documented as opt-in modules precisely so a plain Laravel + PHPUnit project isn't handed instructions for packages it doesn't have.
+**Not every PHP backend runs Laravel, Lomkit, or an org-specific PHPStan ruleset.** Those are documented as opt-in modules precisely so a plain framework + test-runner project isn't handed instructions for packages it doesn't have.
 
 ## Definition of done
 
@@ -42,7 +45,7 @@ The floor below is **80%** (lines and branches) unless this copy was configured 
 
 Read the target project's `composer.json`:
 
-1. Confirm `laravel/framework` is present — this playbook assumes Laravel. If it's a different PHP framework (Symfony, plain PHP), the core principles (plan first, isolate, permission matrix, review gate) still apply but the specific commands below don't — adapt them to the framework's own testing tools.
+1. Detect which framework is present via `composer.json` (`laravel/framework`, `symfony/framework-bundle`, or a different PHP framework). The core principles (plan first, isolate, permission matrix, review gate) apply regardless — the specific commands and idioms below are written Laravel-first with Symfony call-outs; for a different framework, adapt to its own routing/DI/testing conventions.
 2. Check for `pestphp/pest` — if present, use Pest syntax (`it(...)`, `test(...)`); if absent, use plain PHPUnit test classes (`extends TestCase`, `#[Test]` attribute or `test_` prefixed methods) — **this is the default assumption**, since it's the more common convention in real-world Laravel backends.
 3. Check for `larastan/larastan` (or plain `phpstan/phpstan`) — if present, static analysis is part of the definition of done (Step 6); if absent, skip that check entirely rather than pushing the team to adopt a new tool.
 4. Check for `spatie/laravel-permission` — changes how personas are built in Step 5.2 (roles/permissions API vs a bespoke check).

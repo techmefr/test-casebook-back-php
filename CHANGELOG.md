@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0
+
+- **First non-Laravel worked example: Symfony 8.1.** Same blog-idea scenario (roles, private article, scheduled publishing, comments + notification), built with Symfony's own idioms: a `Voter` for authorization, a custom `AbstractAuthenticator` for API-token auth, Serializer+Validator for request validation, `dama/doctrine-test-bundle` for per-test isolation. **45/45 tests green (9 unit + 36 functional), PHPStan level 7 clean, 93.12% line coverage.** See [`docs/testing-guide/symfony.md`](docs/testing-guide/symfony.md).
+- **Real finding: `Voter::voteOnAttribute()`'s signature gained a `?Vote $vote = null` parameter** in a recent Symfony version — a fatal compile error until fixed, the same category of finding as the doctrine's existing "ORM major-version API drift" note.
+- **Real finding: PHPUnit 12+ flags `createMock()` used without `->expects()`** as a code smell ("consider `createStub()` instead") — a genuine tooling behavior change, not a project bug. Pure test doubles now belong to `createStub()`; `createMock()` is reserved for assertions that actually check invocation counts.
+- **Real finding: Symfony's DI-based time-mocking (`ClockInterface`/`MockClock`) has no fake-timers-hangs-real-async-plumbing hazard**, unlike every JS framework in the sibling `test-casebook-back-js` doctrine that needed a `doNotFake` list. Because the fake clock is swapped into the container rather than monkey-patching global timer functions, only code that explicitly asks for `ClockInterface` sees fake time — a genuine cross-ecosystem architectural difference worth naming.
+- **`AGENTS.md`'s "Core vs optional" restructured to be framework-agnostic** (Laravel and Symfony both detected via `composer.json`, core steps apply to either) rather than assuming Laravel unconditionally — mirrors the multi-framework structure already used by the sibling `test-casebook-back-js` doctrine.
+
 ## 0.8.0
 
 - **Four more claims checked for real, not just assumed, against the accumulated Lomkit/blog demo:**

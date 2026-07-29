@@ -1,22 +1,25 @@
 # test-casebook-back
 
-> A testing methodology and AI-agent playbook for Laravel backends — exhaustive, strictly-typed, persona-matrix-driven test suites.
+> A testing methodology and AI-agent playbook for PHP backends — exhaustive, strictly-typed, persona-matrix-driven test suites.
 
-`test-casebook-back` is the **backend counterpart** of [`test-casebook`](https://github.com/techmefr/test-casebook) (the frontend/JS doctrine). Same method — plan first, exhaustive not happy-path, isolated and deterministic, permission matrix dense on refused cells, independent review gate, enforced coverage floor — ported to PHP/Laravel. It lives in its **own repo** because the two ecosystems share no distribution mechanism (Composer vs `npx`), no runner (PHPUnit/Pest vs Vitest/Playwright), and no static-analysis tool (PHPStan/Larastan vs `tsc`/ESLint) — see `docs/strategy.md` for the full reasoning.
+`test-casebook-back` is the **backend counterpart** of [`test-casebook`](https://github.com/techmefr/test-casebook) (the frontend/JS doctrine). Same method — plan first, exhaustive not happy-path, isolated and deterministic, permission matrix dense on refused cells, independent review gate, enforced coverage floor — ported to PHP. It lives in its **own repo** because the two ecosystems share no distribution mechanism (Composer vs `npx`), no runner (PHPUnit/Pest vs Vitest/Playwright), and no static-analysis tool (PHPStan/Larastan vs `tsc`/ESLint) — see `docs/strategy.md` for the full reasoning.
 
-## Core vs optional — this is not a Lomkit-only doctrine
+## Core vs optional — this is not a Laravel-only or Lomkit-only doctrine
 
-The **core** (`AGENTS.md` Steps 1–6) applies to **any Laravel project** — plain PHPUnit, no assumptions about which packages you run. A few things are detected and applied **only if present** in the target project's `composer.json`:
+The **core** (`AGENTS.md` Steps 1–6) applies to **any PHP backend** — plain PHPUnit, no assumptions about which framework or packages you run. A few things are detected and applied **only if present** in the target project's `composer.json`:
 
 | Detected via `composer.json` | If present | If absent |
 |---|---|---|
-| `pestphp/pest` | Use Pest syntax | Default: plain PHPUnit test classes |
+| `laravel/framework` | Policies/Gates, Eloquent factories, `spatie/laravel-permission` for roles | Adapt to the project's own framework (Symfony Voters, bespoke auth) |
+| `symfony/framework-bundle` | Voters for authorization, a custom `AbstractAuthenticator`, Serializer+Validator for input validation, `ClockInterface`/`MockClock` for time-mocking (DI-based, no fake-timers hazard) | N/A |
+| `pestphp/pest` (Laravel only) | Use Pest syntax | Default: plain PHPUnit test classes |
 | `larastan/larastan` (or `phpstan/phpstan`) | Static analysis is part of the definition of done | Skip that check entirely |
-| `spatie/laravel-permission` | Build personas via `givePermissionTo`/`assignRole` | Build personas from whatever the project actually uses (role column, bespoke Gate) |
+| `spatie/laravel-permission` | Build personas via `givePermissionTo`/`assignRole` | Build personas from whatever the project actually uses (role column, bespoke Gate/Voter) |
 | `lomkit/laravel-rest-api` | Also read [`docs/testing-guide/lomkit.md`](docs/testing-guide/lomkit.md) — Resource-specific cases (field/relation whitelisting, search/mutate endpoints) | Nothing in the core steps depends on it — skip the guide entirely |
 | `lomkit/laravel-access-control` | Treat row-level scoping as a third enforcement layer (see the Lomkit guide) | N/A |
+| `dama/doctrine-test-bundle` (Symfony) | Per-test transaction rollback is automatic | Reset schema/data explicitly between tests |
 
-**Not every Laravel backend runs Lomkit, `laravel-access-control`, or an org-specific PHPStan ruleset.** Those are real and valuable at Xefi, but this doctrine is written so a plain Laravel + PHPUnit project gets the full core method without being handed instructions for packages it doesn't have.
+**Not every PHP backend runs Laravel, Lomkit, `laravel-access-control`, or an org-specific PHPStan ruleset.** Those are real and valuable at Xefi, but this doctrine is written so a plain framework + test-runner project gets the full core method without being handed instructions for packages it doesn't have.
 
 ## What's inside
 
@@ -28,6 +31,7 @@ The **core** (`AGENTS.md` Steps 1–6) applies to **any Laravel project** — pl
 - **`docs/testing-guide/lomkit.md`** — optional module: the two structurally different enforcement layers Lomkit uses (422 structural whitelist vs 403 Policy gate). Verified twice over — first by reading the package source, then for real: `lomkit/laravel-rest-api` + `lomkit/laravel-access-control` installed on the blog project, 63/63 tests green, Larastan level 7 clean, and two real bugs found in the process (see the guide's "Verified for real" section).
 - **`docs/testing-guide/worked-example.md`** — a real Article API (roles + a private article), run for real: 32/32 PHPUnit tests green (unit + feature, incl. validation & multi-role), Larastan level 7 clean, no Lomkit involved (core doctrine only).
 - **`docs/testing-guide/blog-worked-example.md`** — the full blog idea (visiteur/membre/auteur/admin), scheduled publishing + comments + notification, run for real: 47/47 tests green, Larastan level 7 clean. First real exercise of the isolation rules (`travelTo`, `Notification::fake()`, `recycle()`).
+- **`docs/testing-guide/symfony.md`** — the first non-Laravel worked example, same scenario on Symfony 8.1 using its own Voter/Authenticator abstractions instead of a Laravel Policy/Gate: 45/45 tests green (9 unit + 36 functional), PHPStan level 7 clean, 93.12% line coverage. Found a real base-class signature change (`Voter::voteOnAttribute()` gained a parameter in a recent Symfony version), a PHPUnit 12 behavior change (`createMock()` without `->expects()` now warns — use `createStub()`), and that Symfony's DI-based time-mocking (`ClockInterface`/`MockClock`) sidesteps the fake-timers-hangs-real-async-plumbing hazard found repeatedly on the JS side, since only code that asks the container for the clock sees fake time.
 - **`bin/casebook-back-init.php`** — scaffolder: copies `AGENTS.md`, `docs/` and `.claude/` into a target project.
 
 ## How it's consumed
@@ -49,6 +53,8 @@ Built from real conventions found in Xefi's own Laravel/Lomkit backends (`skera-
 Every category in `AGENTS.md`'s Step 5.0bis checklist — Authorization, Validation, Multi-role aggregation, Isolation, and the Lomkit optional module — has now been run for real, not just documented from reading source.
 
 Four more claims in this doctrine have since been checked for real against that same demo, not just assumed: the 80% coverage floor is genuinely met (90.6% lines via `pcov`); the Pest path actually runs 64/64 green alongside plain PHPUnit, not just PHPUnit; pointing Larastan at `tests/` as well as `app/` surfaces real, fixable errors (`collect()`'s unresolved template type, Pest's unbound `$this`); and the `test-casebook-back-gate.mjs` hook still correctly blocks/allows test-file writes against the final, fully-accumulated project. See [`docs/testing-guide/worked-example.md`](docs/testing-guide/worked-example.md)'s closing section for the details.
+
+The doctrine has since extended beyond Laravel: a fourth stage built the same Article API scenario on **Symfony 8.1**, Docker-free reproduction recipe, 45/45 tests green, PHPStan level 7 clean, 93.12% line coverage. See [`docs/testing-guide/symfony.md`](docs/testing-guide/symfony.md) — real findings include a Symfony base-class signature change, a PHPUnit 12 mock/stub behavior change, and a genuine architectural advantage of DI-based time-mocking over global fake-timers.
 
 ## Contributing
 
