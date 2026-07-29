@@ -1,5 +1,9 @@
 # test-casebook-back
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Frameworks validated](https://img.shields.io/badge/frameworks%20validated-5-brightgreen.svg)](docs/testing-guide/)
+[![Status](https://img.shields.io/badge/status-pre--release-orange.svg)](#how-its-consumed)
+
 **A playbook that stops an AI from writing happy-path-only tests for your PHP backend.**
 
 Most "AI, write my tests" runs stop at a few green checks and a coverage number that looks fine on paper — with permissions, edge cases, and refused-access paths left untested. `test-casebook-back` forces an agent to plan every case from the source *before* writing anything, weight the persona matrix on what gets *refused* (not just what's allowed), gate every block behind an independent review, and hold a real coverage floor.
