@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.0
+
+- **Added mutation testing as a new optional Step 7**, detected via `infection/infection`: scoped to permission-gated/business-critical units, thresholds of 70%/50% mutation score, addressing the well-documented gap where line coverage alone lets a suite pass while asserting almost nothing (e.g. a reported 93% coverage / 34% mutation score case).
+- **Reviewer (`test-reviewer-back`) now explicitly rejects weak assertions** (`assertNotNull`, bare `assertOk()`, "no exception thrown") and **checks oracle correctness** — the expected value in a test must come from the plan/business rule, never be reverse-engineered from the implementation's own output.
+- **Guardrails extended** with the corresponding "do not" rules for weak assertions, circular oracles, and ignoring surviving mutants on gated units.
+
 ## 0.12.0
 
 - **Fourth non-Laravel worked example, and the last in this framework queue: CodeIgniter 4.** Built from the official `codeigniter4/appstarter` skeleton — the first framework in this doctrine assembled from a full application shell rather than library-mode primitives. **48/48 tests green (9 unit + 39 functional), PHPStan level 7 clean, 97.35% line coverage** (scoped to code actually written). See [`docs/testing-guide/codeigniter4.md`](docs/testing-guide/codeigniter4.md).

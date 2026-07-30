@@ -35,6 +35,7 @@ When you finish, all of these must be true:
 3. A `task-test.md` plan exists, lists every unit and its enumerated cases (see Step 5.0), and **every box in it is ticked, reviewed, and committed** — tests exist for every layer the project needs (unit/feature, and integration against the real database via factories), **cover every branch and state of each unit under test**, are **strictly typed** (`declare(strict_types=1)`, typed factories/fixtures), **pass**, and each block was validated by a review agent before its commit.
 4. Test coverage is **at least the project's coverage floor** (see "Coverage floor" below).
 5. Every **permission-gated** unit (a Policy, a Gate, a role/permission check) is covered by a **permission matrix** (Step 5.2) — scenario × persona, expected from the plan, at least one *refused* persona per gated capability, and every enforcement layer asserted.
+6. If Infection is present (or was proposed and accepted), mutation score on permission-gated/business-critical units meets the project's threshold (Step 7) — a surviving mutant there means a missing case, not an acceptable gap.
 
 Work through the steps in order. Do not skip verification.
 
@@ -165,6 +166,20 @@ Directly ported from the front doctrine's Step 5.2 — same reasoning, same weig
 
 ---
 
+## Step 7 — Mutation testing on gated/critical paths (if Infection is present, recommended if not)
+
+Line coverage is a weak, gameable signal on its own — a suite can hit every line while asserting nothing more specific than "no exception was thrown" (see the reviewer's weak-assertion check, Step 5.1/reviewer point 5) and still show 90%+ coverage. Mutation testing catches that: it re-runs the suite against deliberately broken versions of the code (a `>` flipped to `>=`, a boolean negated, a return value swapped) and reports what fraction of those mutants the suite actually kills.
+
+- **Detect** [`infection/infection`](https://infection.github.io/) via `composer.json`. If absent, it's worth proposing — a single `composer require --dev infection/infection` — but never install it unasked; treat it as optional the same way PHPStan is (Step 3).
+- **Run it scoped to the permission-gated and business-critical units** identified in Step 5.0/5.2 — not the whole codebase on every run, that's slow and not where the signal matters most:
+  ```bash
+  vendor/bin/infection --filter=app/Policies,app/Actions --min-msi=70 --min-covered-msi=70
+  ```
+- **Thresholds**: mutation score ≥ **70%** on permission-gated/business-critical units (Policies, Actions enforcing a rule, validation logic), ≥ **50%** as a general floor elsewhere. These are starting points, not universal law — a per-project setting like the coverage floor.
+- **A surviving mutant on a gated unit is a missing case, not noise.** If Infection reports a mutant survived inside a Policy's `update()` method, that's a persona/scenario the matrix (Step 5.2) didn't actually pin down — go back to Step 5.0 and add the case; don't suppress the mutant or lower the threshold.
+
+---
+
 ## Guardrails
 
 - Do **not** assume Lomkit, `laravel-access-control`, `spatie/laravel-permission`, or any org-specific PHPStan ruleset is present — detect via `composer.json` (Step 1) and skip the module cleanly if it isn't.
@@ -178,3 +193,6 @@ Directly ported from the front doctrine's Step 5.2 — same reasoning, same weig
 - Do **not** call `Event::fake()` before factory setup — it silences the model events factories often depend on.
 - Do **not** mutate a single seeded user's role/permissions to represent multiple personas in one test — mint a fresh persona per test instead.
 - Do **not** test the framework or a third-party package's own internals — test your Policies, your validation, your custom Resource/Action/Instruction logic only.
+- Do **not** write an assertion that would still pass if the expected value were wrong — `assertNotNull`, "no exception thrown", or a bare status-code check standing in for the real value is a weak assertion (see the reviewer's check).
+- Do **not** derive an expected value by running the implementation and copying its output — derive it from the plan/business rule (`task-test.md`), or the test's oracle is circular and will lock in a bug instead of catching one.
+- Do **not** treat a surviving mutant on a permission-gated or business-critical unit as noise — it maps to a missing case in `task-test.md` (Step 7).
