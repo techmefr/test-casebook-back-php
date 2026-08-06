@@ -1,0 +1,40 @@
+{
+    "name": "test-casebook-back-php",
+    "version": "0.14.0",
+    "description": "Testing methodology and AI-agent playbook for PHP/Laravel backends — exhaustive, permission-matrix-driven test suites",
+    "author": "techmefr",
+    "license": "MIT",
+    "type": "module",
+    "bin": {
+        "test-casebook-back-php": "bin/casebook-back-init.mjs"
+    },
+    "homepage": "https://github.com/techmefr/test-casebook-back-php#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/techmefr/test-casebook-back-php.git"
+    },
+    "bugs": {
+        "url": "https://github.com/techmefr/test-casebook-back-php/issues"
+    },
+    "keywords": [
+        "testing",
+        "test-automation",
+        "ai-agents",
+        "claude-code",
+        "php",
+        "laravel",
+        "pest",
+        "phpunit",
+        "symfony",
+        "methodology",
+        "backend",
+        "mutation-testing"
+    ],
+    "files": [
+        "AGENTS.md",
+        "docs",
+        ".claude",
+        "bin",
+        "composer.json"
+    ]
+}

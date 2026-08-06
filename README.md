@@ -41,7 +41,10 @@ Full walkthrough, including the "no routing/error middleware by default" finding
 ## Quickstart
 
 ```bash
-# from a checkout of this repo, targeting your project as cwd
+# from your project's root (needs a php binary on PATH)
+npx test-casebook-back-php init --force
+
+# or from a checkout of this repo, targeting your project as cwd
 php bin/casebook-back-init.php init --force
 
 # then, in Claude Code, opened on your project:
@@ -90,11 +93,14 @@ The **core** (`AGENTS.md` Steps 1–6) applies to **any PHP backend** — plain 
 
 ## How it's consumed
 
+- **npm package** — `npx test-casebook-back-php init`, or `npm i -D test-casebook-back-php` to pin a version. The package ships `AGENTS.md`, `docs/`, `bin/` and the `.claude/` skill and sub-agents, so an update propagates by bumping the dependency. Published on npm rather than Packagist because what it distributes is a doctrine plus a Claude Code skill, not PHP runtime code — nothing here is ever autoloaded.
 - **Claude Code skill + sub-agents** — the primary path, shown in Quickstart.
-- **Scaffolder alone** — `php bin/casebook-back-init.php init [--force]`.
+- **Scaffolder alone** — `php bin/casebook-back-init.php init [--force]`. The `npx` entry point is a thin Node wrapper around exactly this script.
 - **Docs directly** — hand `AGENTS.md` (and the relevant `docs/testing-guide/*.md`) to any agent.
 
-No installable Composer package yet (no service provider, no `artisan casebook:init` wrapper) — a natural fast-follow once this repo has seen real use.
+No Composer package, and none planned: there is no service provider and no `artisan casebook:init` wrapper because there is no runtime to provide.
+
+Published at `0.x` on purpose: the doctrine is written and five frameworks are documented, but the playbook has not yet been run end to end on a real project. Treat the minor version as "may change".
 
 ## Contributing
 

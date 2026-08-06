@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.0
+
+- **Published on npm as `test-casebook-back-php`** — `npx test-casebook-back-php init --force` from a project root, or `npm i -D test-casebook-back-php` to pin a version so an update propagates by bumping the dependency. The published package ships `AGENTS.md`, `docs/`, `bin/`, `composer.json` and the `.claude/` skill and sub-agents.
+- **Added `bin/casebook-back-init.mjs`**, a thin Node wrapper that locates a PHP binary (`PHP_BINARY` honoured) and forwards its arguments to `bin/casebook-back-init.php` unchanged, so the `npx` path and the direct `php bin/…` path run the exact same scaffolder. It fails with an explicit message and the direct command when no PHP binary is found.
+- **Not on Packagist, and not planned.** What this repo distributes is a doctrine plus a Claude Code skill, not PHP runtime code — nothing in it is ever autoloaded, so there is no service provider and no `artisan casebook:init` to provide. README's "How it's consumed" updated accordingly.
+
 ## 0.13.0
 
 - **Added mutation testing as a new optional Step 7**, detected via `infection/infection`: scoped to permission-gated/business-critical units, thresholds of 70%/50% mutation score, addressing the well-documented gap where line coverage alone lets a suite pass while asserting almost nothing (e.g. a reported 93% coverage / 34% mutation score case).
