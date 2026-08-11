@@ -1,6 +1,6 @@
 {
     "name": "test-casebook-back-php",
-    "version": "0.14.0",
+    "version": "1.0.0",
     "description": "Testing methodology and AI-agent playbook for PHP/Laravel backends — exhaustive, permission-matrix-driven test suites",
     "author": "techmefr",
     "license": "MIT",
