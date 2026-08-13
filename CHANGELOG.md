@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0
+
+- **The npx wrapper now checks for a newer published version** after the scaffolder runs, against the npm registry (`registry.npmjs.org`), with a 1.5s timeout and silent failure if offline or unreachable — never blocks or errors the run. Prints an update hint (current -> latest, and the `npm i -D` command) when one exists.
+
 ## 1.0.0
 
 - **First stable release.** No content change from 0.14.0 — bumped to mark the first stable npm publish of `test-casebook-back-php`.
