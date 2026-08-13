@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0
+
+- **First stable release.** No content change from 0.14.0 — bumped to mark the first stable npm publish of `test-casebook-back-php`.
+
 ## 0.14.0
 
 - **Published on npm as `test-casebook-back-php`** — `npx test-casebook-back-php init --force` from a project root, or `npm i -D test-casebook-back-php` to pin a version so an update propagates by bumping the dependency. The published package ships `AGENTS.md`, `docs/`, `bin/`, `composer.json` and the `.claude/` skill and sub-agents.
