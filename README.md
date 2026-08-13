@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Frameworks validated](https://img.shields.io/badge/frameworks%20validated-5-brightgreen.svg)](docs/testing-guide/)
-[![Status](https://img.shields.io/badge/status-pre--release-orange.svg)](#how-its-consumed)
+[![npm](https://img.shields.io/npm/v/test-casebook-back-php.svg)](https://www.npmjs.com/package/test-casebook-back-php)
 
 **A playbook that stops an AI from writing happy-path-only tests for your PHP backend.**
 
@@ -93,14 +93,14 @@ The **core** (`AGENTS.md` Steps 1–6) applies to **any PHP backend** — plain 
 
 ## How it's consumed
 
-- **npm package** — `npx test-casebook-back-php init`, or `npm i -D test-casebook-back-php` to pin a version. The package ships `AGENTS.md`, `docs/`, `bin/` and the `.claude/` skill and sub-agents, so an update propagates by bumping the dependency. Published on npm rather than Packagist because what it distributes is a doctrine plus a Claude Code skill, not PHP runtime code — nothing here is ever autoloaded.
+- **npm package** — `npx test-casebook-back-php init`, or `npm i -D test-casebook-back-php` to pin a version. The package ships `AGENTS.md`, `docs/`, `bin/` and the `.claude/` skill and sub-agents, so an update propagates by bumping the dependency. Published on npm rather than Packagist because what it distributes is a doctrine plus a Claude Code skill, not PHP runtime code — nothing here is ever autoloaded. `init` also checks the npm registry for a newer published version and prints an update hint if one exists (silent, non-blocking, if offline).
 - **Claude Code skill + sub-agents** — the primary path, shown in Quickstart.
 - **Scaffolder alone** — `php bin/casebook-back-init.php init [--force]`. The `npx` entry point is a thin Node wrapper around exactly this script.
 - **Docs directly** — hand `AGENTS.md` (and the relevant `docs/testing-guide/*.md`) to any agent.
 
 No Composer package, and none planned: there is no service provider and no `artisan casebook:init` wrapper because there is no runtime to provide.
 
-Published at `0.x` on purpose: the doctrine is written and five frameworks are documented, but the playbook has not yet been run end to end on a real project. Treat the minor version as "may change".
+Releases are automated: merging a PR to `main` that changes `package.json`'s version triggers CI to publish that version to npm (see `CONTRIBUTING.md`).
 
 ## Contributing
 

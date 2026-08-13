@@ -9,3 +9,7 @@ Three ways to get involved right now, before the real-project runs even start:
 - **Volunteer your project** — if you maintain a PHP backend and don't mind an experimental test suite showing up as a PR, say so.
 
 No process beyond that: fork, branch, PR against `main`. Mention what you verified it against — a real running project beats reasoning from the docs.
+
+## Releasing (maintainers)
+
+Publishing is automated. Bump `version` in `package.json`, add the matching entry to `CHANGELOG.md`, and open a PR against `main` — once it's merged, CI publishes that version to npm on its own (`.github/workflows/publish.yml`), by comparing `package.json`'s version against what's currently on the registry. Nothing to run by hand, and nothing publishes if the version didn't change.
